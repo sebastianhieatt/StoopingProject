@@ -8,10 +8,13 @@
 import SwiftUI
 
 @main
-struct StoopingProjectApp: App {
+struct MyAppApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    NotificationManager.requestPermission()
+                }
         }
     }
 }
