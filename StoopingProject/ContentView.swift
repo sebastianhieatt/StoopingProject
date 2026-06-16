@@ -2,25 +2,25 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
+        TabView {
 
-                Text("Stooping Club")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-
-                NavigationLink(destination: DonationsView()) {
-                    Text("Donations")
-                        .fontWeight(.semibold)
-                        .padding()
-                        .frame(maxWidth: 250)
-                        .background(Color.green)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
+            HomeView()
+                .tabItem {
+                    Image(systemName: "house.fill")
+                    Text("Home")
                 }
 
-            }
-            .navigationTitle("Home")
+            DonationsView()
+                .tabItem {
+                    Image(systemName: "heart.fill")
+                    Text("Donate")
+                }
+
+            WorkInProgressView(title: "Checkout")
+                .tabItem {
+                    Image(systemName: "cart.fill")
+                    Text("Checkout")
+                }
         }
     }
 }
