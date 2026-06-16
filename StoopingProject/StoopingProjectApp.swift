@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct MyAppApp: App {
+struct StoopingProjectApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -18,3 +18,4 @@ struct MyAppApp: App {
         }
     }
 }
+

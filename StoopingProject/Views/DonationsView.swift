@@ -6,3 +6,15 @@
 //
 
 import Foundation
+import SwiftUI
+
+struct DonationsView: View {
+    var body: some View {
+        ZStack {
+            Color.green.opacity(0.3).ignoresSafeArea()
+
+            Text("Donations Page")
+                .font(.largeTitle)
+        }
+    }
+}

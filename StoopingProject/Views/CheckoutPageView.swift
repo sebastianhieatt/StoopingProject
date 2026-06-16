@@ -11,10 +11,10 @@ import Foundation
 //NotificationManager.notificationsEnabled = true
 //NotificationManager.notificationsEnabled = false
 
-NotificationManager.scheduleNotification(
-    title: "Hello!",
-    body: "Pickup is at",
-    weekday: 2,
-    hour: 9,
-    minute: 0
-)
+//NotificationManager.scheduleNotification(
+//    title: "Hello!",
+//    body: "Pickup is at",
+//    weekday: 2,
+//    hour: 9,
+//    minute: 0
+//)
