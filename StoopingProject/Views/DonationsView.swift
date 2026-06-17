@@ -53,7 +53,7 @@ Please submit the form below with photos and brief descriptions. We'll follow up
                 }
 
                 // BUTTON
-                Link(destination: URL(string: "https://forms.google.com")!) {
+                Link(destination: URL(string: "https://docs.google.com/forms/d/e/1FAIpQLSeKuDH4IhHSY8S5IufX0X5kv8_6F2Qkeyv8L-UhoFwRkDfLZg/viewform")!) {
                     Text("Donations Form")
                         .fontWeight(.semibold)
                         .padding()

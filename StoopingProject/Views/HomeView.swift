@@ -9,9 +9,11 @@ struct HomeView: View {
             ScrollView {
                 VStack(spacing: 20) {
 
-                    Text("Stooping Club")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
+                    Image("HomeBackground")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity)
+                        .cornerRadius(20)
                         .padding(.top)
 
                     // MARK: - MENU BUTTON
