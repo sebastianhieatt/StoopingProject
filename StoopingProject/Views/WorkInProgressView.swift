@@ -6,22 +6,64 @@ struct WorkInProgressView: View {
     var body: some View {
         ScrollView {
 
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(spacing: 24) {
 
-                if title == "Rules and Guidelines" {
+                // MARK: - RULES + HOW IT WORKS
+                if title == "How it Works" {
 
-                    Text("📌 The only rules are:")
-                        .font(.title3)
-                        .fontWeight(.bold)
+                    VStack(spacing: 24) {
 
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("1. 10 items per checkout")
-                        Text("2. 1 checkout per week")
-                        Text("3. Everything is free")
+
+                        // MARK: - HOW IT WORKS
+                        VStack(alignment: .leading, spacing: 12) {
+
+                            Text("Process")
+                                .font(.title3)
+                                .fontWeight(.bold)
+
+                            StepRow(
+                                number: "1",
+                                title: "Browse",
+                                text: "Customers shop on the app. Everything is free!"
+                            )
+
+                            StepRow(
+                                number: "2",
+                                title: "Order",
+                                text: "Place an order."
+                            )
+
+                            StepRow(
+                                number: "3",
+                                title: "Confirm",
+                                text: "Reply to confirmation by Friday end of day or the order is relisted."
+                            )
+
+                            StepRow(
+                                number: "4",
+                                title: "Pick Up",
+                                text: "Every Sunday 2–3 PM in El Cerrito. Local pickup only."
+                            )
+                        }
+
+                        // MARK: - RULES
+                        VStack(alignment: .leading, spacing: 12) {
+
+                            Text("Rules")
+                                .font(.title3)
+                                .fontWeight(.bold)
+
+                            RuleRow(number: "1", text: "10 items per checkout")
+                            RuleRow(number: "2", text: "1 checkout per week")
+                            RuleRow(number: "3", text: "Everything is free")
+                        }
                     }
-                    .font(.body)
+                    .frame(maxWidth: .infinity)
 
-                } else if title == "About Us" {
+                }
+
+                // MARK: - ABOUT US
+                else if title == "About Us" {
 
                     VStack(alignment: .leading, spacing: 16) {
 
@@ -43,16 +85,86 @@ struct WorkInProgressView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                } else {
+                }
 
-                    Text("Work in Progress 🚧")
-                        .font(.title2)
-                        .foregroundColor(.gray)
+                // MARK: - DEFAULT
+                else {
+
+                    VStack {
+                        Spacer()
+                        Text("Work in Progress 🚧")
+                            .font(.title2)
+                            .foregroundColor(.gray)
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
         }
         .navigationTitle(title)
+    }
+}
+
+// MARK: - STEP ROW
+struct StepRow: View {
+    let number: String
+    let title: String
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+
+            Text(number)
+                .font(.headline)
+                .fontWeight(.bold)
+                .frame(width: 34, height: 34)
+                .background(Color.blue.opacity(0.15))
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 4) {
+
+                Text(title)
+                    .font(.headline)
+
+                Text(text)
+                    .font(.body)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding()
+        .background(Color.gray.opacity(0.08))
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - RULE ROW
+struct RuleRow: View {
+    let number: String
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+
+            Text(number)
+                .font(.subheadline)
+                .fontWeight(.bold)
+                .foregroundColor(.green)
+                .frame(width: 34, height: 34)
+                .background(Color.green.opacity(0.15))
+                .clipShape(Circle())
+
+            Text(text)
+                .font(.body)
+                .foregroundColor(.primary)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
+        .background(Color.gray.opacity(0.08))
+        .cornerRadius(12)
     }
 }
