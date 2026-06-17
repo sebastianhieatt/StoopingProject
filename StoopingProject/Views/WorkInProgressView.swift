@@ -21,6 +21,28 @@ struct WorkInProgressView: View {
                     }
                     .font(.body)
 
+                } else if title == "About Us" {
+
+                    VStack(alignment: .leading, spacing: 16) {
+
+                        Text("Stooping Club is the world's first free online chain store. We offer new and preloved household items at no cost to promote sustainability and community sharing.")
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Our Vision")
+                                .font(.headline)
+
+                            Text("To transform society's throwaway culture into a reuse culture and build a circular economy.")
+                        }
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Our Mission")
+                                .font(.headline)
+
+                            Text("To give useful items a second life by making reuse free and accessible for everyone.")
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
                 } else {
 
                     Text("Work in Progress 🚧")
