@@ -10,9 +10,12 @@ import Buy
 
 struct StoreListView: View {
     @EnvironmentObject var shopify: ShopifyService
-    @Binding var viewMode: StoreView.ViewMode?
     @State private var selectedCategory: String = "All"
-
+    @State private var viewMode: ViewMode? = nil
+    @State private var showCarousel = false
+    
+    enum ViewMode { case list, carousel }
+    
     let categories = ["All", "Accessories", "Apparel", "Art", "Baby", "Books & DVDs", "Cal Merch", "Calendars", "Collectibles", "Costume Jewelry", "Dorm Essentials", "Electronics", "Food", "Furniture", "Health & Beauty", "Holiday", "Home Decor", "Home Improvement", "Household Items", "Kitchenware", "Music & Instruments", "Party Supplies", "Pet Supplies", "School & Office Supplies", "Sports", "Toys & Games", "Water Bottles"]
     var filteredProducts: [Storefront.Product] {
         if selectedCategory == "All" {
@@ -27,7 +30,6 @@ struct StoreListView: View {
     ]
 
     var body: some View {
-        NavigationView {
             VStack(spacing: 0) {
 
                 // MARK: - Category Chips
@@ -72,17 +74,18 @@ struct StoreListView: View {
             .navigationTitle("All Items")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { viewMode = .carousel }) {
+                    Button(action: { showCarousel = true }) {
                         Image(systemName: "rectangle.stack.fill")
                     }
+                    .background(
+                        NavigationLink(destination: StoreCarouselView(), isActive: $showCarousel) {
+                            EmptyView()
+                        }
+                    )
                 }
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { viewMode = nil }) {
-                        Image(systemName: "chevron.left")
-                    }
-                }
+                
+                
             }
-        }
     }
     // MARK: - Pagination View
     var paginationView: some View {
@@ -100,6 +103,7 @@ struct StoreListView: View {
                             shopify.fetchNextPage()
                         } else if let collection = shopify.collections.first(where: { $0.title == selectedCategory }) {
                             shopify.fetchProductsForCollection(collection)
+                            
                         }
                     }
             }
@@ -110,28 +114,31 @@ struct StoreListView: View {
         let product: Storefront.Product
 
         var body: some View {
-            VStack(spacing: 8) {
-                if let imageURL = product.images.edges.first?.node.url {
-                    CachedAsyncImage(url: imageURL)
-                        .frame(height: 150)
-                        .clipped()
-                        .cornerRadius(12)
-                } else {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(height: 150)
-                }
+            NavigationLink(destination: ItemDescriptionView(product: product)) {
+                VStack(spacing: 8) {
+                    if let imageURL = product.images.edges.first?.node.url {
+                        CachedAsyncImage(url: imageURL)
+                            .frame(height: 150)
+                            .clipped()
+                            .cornerRadius(12)
+                    } else {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.gray.opacity(0.2))
+                            .frame(height: 150)
+                    }
 
-                Text(product.title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
+                    Text(product.title)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .foregroundColor(.primary)
+                }
+                .padding(8)
+                .background(Color.white)
+                .cornerRadius(16)
+                .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
             }
-            .padding(8)
-            .background(Color.white)
-            .cornerRadius(16)
-            .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
         }
     }
 }

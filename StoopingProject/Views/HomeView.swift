@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct HomeView: View {
-
+    @EnvironmentObject var shopify: ShopifyService
     @State private var showMenu = false
 
     var body: some View {
@@ -83,6 +83,10 @@ struct HomeView: View {
                 }
                 .padding()
             }
+            .onAppear {
+                shopify.fetchNextPage()
+                shopify.fetchCollections()
+            }
             .navigationTitle("Home")
         }
     }
@@ -131,7 +135,7 @@ struct NavIconButton: View {
             WorkInProgressView(title: "About Us")
 
         case "Shop Now":
-            StoreView()
+            StoreListView()
 
         case "Checkout":
             WorkInProgressView(title: "Checkout")

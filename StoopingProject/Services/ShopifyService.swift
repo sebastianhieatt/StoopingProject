@@ -22,11 +22,61 @@ class ShopifyService: ObservableObject {
     var currentCollectionID: GraphQL.ID? = nil
     var lastCursor: String? = nil
     var hasNextPage = true
-
+    
+    init() {
+        loadSavedState()
+    }
+    
     private let client = Graph.Client(
         shopDomain: "stooping-club-berkeley.myshopify.com",
         apiKey: "efde750d94d72e1a383e34ed9da89005"
     )
+    // MARK: - Cart & Checkout Limits
+    
+    @Published var cartItems: [GraphQL.ID] = [] {
+        didSet {
+            // Save cart to UserDefaults whenever it changes
+            let stringIDs = cartItems.map { $0.rawValue }
+            UserDefaults.standard.set(stringIDs, forKey: "cartItems")
+        }
+    }
+
+    @Published var lastCheckoutDate: Date? {
+        didSet {
+            UserDefaults.standard.set(lastCheckoutDate, forKey: "lastCheckoutDate")
+        }
+    }
+
+    var cartIsFull: Bool { cartItems.count >= 10 }
+
+    var canCheckoutThisWeek: Bool {
+        guard let lastDate = lastCheckoutDate else { return true }
+        let daysSinceLastCheckout = Calendar.current.dateComponents([.day], from: lastDate, to: Date()).day ?? 0
+        return daysSinceLastCheckout >= 7
+    }
+
+    var cartCount: Int { cartItems.count }
+
+    // Call this in init() to restore saved state
+    func loadSavedState() {
+        if let savedIDs = UserDefaults.standard.array(forKey: "cartItems") as? [String] {
+            cartItems = savedIDs.map { GraphQL.ID(rawValue: $0) }
+        }
+        lastCheckoutDate = UserDefaults.standard.object(forKey: "lastCheckoutDate") as? Date
+    }
+
+    func addToCart(variantID: GraphQL.ID) -> Bool {
+        guard !cartIsFull else { return false }
+        guard !cartItems.contains(variantID) else { return false } // no duplicates
+        cartItems.append(variantID)
+        addToCartAndCheckout(variantID: variantID)
+        return true
+    }
+
+    func recordCheckout() {
+        lastCheckoutDate = Date()
+        cartItems = [] // clear cart after checkout
+    }
     
     func fetchProductsForCollection(_ collection: Storefront.Collection) {
         // Reset if switching collections
@@ -60,7 +110,9 @@ class ShopifyService: ObservableObject {
                             .id()
                             .title()
                             .productType()
-                            .images(first: 1) { $0
+                            .description()
+                            .tags()
+                            .images(first: 5) { $0
                                 .edges { $0
                                     .node { $0
                                         .url()
@@ -90,6 +142,18 @@ class ShopifyService: ObservableObject {
                 if let productsData = response?.collection?.products {
                     let newProducts = productsData.edges.map { $0.node }
                     print("✅ Got \(newProducts.count) products, hasNextPage: \(productsData.pageInfo.hasNextPage)")
+                    if let productsData = response?.collection?.products {
+                        let newProducts = productsData.edges.map { $0.node }
+                        newProducts.forEach { product in
+                            print("🏷️ \(product.title)")
+                        }
+                    }
+                    newProducts.forEach { product in
+                        print("🏷️ \(product.title)")
+                        print("   📝 Description: \(product.description)")
+                        print("   🔖 Tags: \(product.tags)")
+                        print("   💰 Price: \(product.variants.edges.first?.node.price.amount ?? 0)")
+                    }
                     DispatchQueue.main.async {
                         self.collectionProducts.append(contentsOf: newProducts)
                         self.collectionHasNextPage = productsData.pageInfo.hasNextPage
@@ -117,7 +181,8 @@ class ShopifyService: ObservableObject {
                                     .id()
                                     .title()
                                     .productType()
-                                    .images(first: 1) { $0
+                                    .description()
+                                    .images(first: 5) { $0
                                         .edges { $0
                                             .node { $0
                                                 .url()
@@ -170,7 +235,8 @@ class ShopifyService: ObservableObject {
                         .id()
                         .title()
                         .productType()
-                        .images(first: 1) { $0
+                        .description()
+                        .images(first: 5) { $0
                             .edges { $0
                                 .node { $0
                                     .url()
