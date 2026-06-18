@@ -53,6 +53,7 @@ struct StoreView: View {
                 .padding()
             }
         }
-        .onAppear { shopify.fetchProducts() }
+        .onAppear { shopify.fetchCollections(); shopify.fetchProducts() }
+        
     }
 }
