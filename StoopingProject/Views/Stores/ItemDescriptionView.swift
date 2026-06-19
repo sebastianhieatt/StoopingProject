@@ -111,7 +111,8 @@ struct ItemDescriptionView: View {
                     
                     // MARK: - Add to Cart Button
                     Button(action: {
-                        let success = shopify.addToCart(variantID: product.variants.edges.first!.node.id)
+                        guard let variantID = product.variants.edges.first?.node.id else { return }
+                        let success = shopify.addToCart(productID: product.id, variantID: variantID)
                         if success {
                             addedToCart = true
                             cartError = nil
@@ -123,7 +124,7 @@ struct ItemDescriptionView: View {
                     }) {
                         HStack {
                             Image(systemName: addedToCart ? "checkmark" : "cart.badge.plus")
-                            Text(addedToCart ? "Added to Cart (\(shopify.cartCount)/10)" : "Add to Cart")
+                            Text(addedToCart ? "Added to Cart" : "Add to Cart")
                         }
                         .frame(maxWidth: .infinity)
                         .padding()

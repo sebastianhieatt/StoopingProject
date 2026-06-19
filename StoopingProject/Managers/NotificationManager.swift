@@ -49,4 +49,30 @@ class NotificationManager {
             }
         }
     }
+    
+    // Call this to fire a one-time notification shortly after checkout
+    static func scheduleCheckoutConfirmation(title: String = "Order Confirmed!", body: String = "Thanks for your order. We'll text/email you with pickup details soon.") {
+        
+        guard notificationsEnabled else {
+            print("Notifications are disabled.")
+            return
+        }
+        
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        
+        // Fires 2 seconds after checkout completes
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Error scheduling checkout notification: \(error.localizedDescription)")
+            } else {
+                print("Checkout confirmation notification scheduled.")
+            }
+        }
+    }
 }

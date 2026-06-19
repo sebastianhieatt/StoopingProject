@@ -156,7 +156,7 @@ struct CarouselCard: View {
 
             Button(action: {
                 guard let variantID = product.variants.edges.first?.node.id else { return }
-                let success = shopify.addToCart(variantID: variantID)
+                let success = shopify.addToCart(productID: product.id, variantID: variantID)
                 if success {
                     addedToCart = true
                     cartError = nil

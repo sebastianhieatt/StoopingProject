@@ -12,10 +12,12 @@ import ShopifyCheckoutSheetKit
 struct CheckoutPageView: View {
     @EnvironmentObject var shopify: ShopifyService
     
+    
     // Contact
     @State private var email = ""
     
     // Address
+    @State private var fetchedProducts: [String: Storefront.Product] = [:]
     @State private var firstName = ""
     @State private var lastName = ""
     @State private var address = ""
@@ -27,11 +29,100 @@ struct CheckoutPageView: View {
     @State private var isSubmitting = false
     @State private var showCheckoutSheet = false
     @State private var errorMessage: String? = nil
+    
+    func resolvedProduct(for item: ShopifyService.CartItem) -> Storefront.Product? {
+        if let cached = fetchedProducts[item.productID] {
+            return cached
+        }
+        if let local = shopify.products.first(where: { $0.id.rawValue == item.productID }) {
+            return local
+        }
+        if let local = shopify.collectionProducts.first(where: { $0.id.rawValue == item.productID }) {
+            return local
+        }
+        fetchMissingProduct(productID: item.productID)
+        return nil
+    }
 
+    func fetchMissingProduct(productID: String) {
+        guard fetchedProducts[productID] == nil else { return }
+        shopify.fetchProduct(by: GraphQL.ID(rawValue: productID)) { product in
+            if let product = product {
+                fetchedProducts[productID] = product
+            }
+        }
+    }
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                // MARK: - Cart Summary
+                SectionHeader(title: "Order Summary")
 
+                VStack(spacing: 0) {
+                    if shopify.cartItems.isEmpty {
+                        Text("Your cart is empty.")
+                            .foregroundColor(.secondary)
+                            .padding()
+                    } else {
+                        ForEach(shopify.cartItems, id: \.variantID) { item in
+                            if let product = resolvedProduct(for: item) {
+                                HStack(spacing: 12) {
+                                    if let imageURL = product.images.edges.first?.node.url {
+                                        CachedAsyncImage(url: imageURL)
+                                            .frame(width: 50, height: 50)
+                                            .clipped()
+                                            .cornerRadius(8)
+                                    } else {
+                                            // Shows briefly while fetching from API
+                                            HStack {
+                                                ProgressView()
+                                                Text("Loading item...")
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            .padding()
+                                        }
+
+                                    Text(product.title)
+                                        .font(.subheadline)
+                                        .lineLimit(2)
+
+                                    Spacer()
+
+                                    Text("Free")
+                                        .font(.subheadline)
+                                        .foregroundColor(.green)
+                                    Button(action: {
+                                                    shopify.removeFromCart(variantID: GraphQL.ID(rawValue: item.variantID))
+                                                }) {
+                                                    Image(systemName: "xmark.circle.fill")
+                                                        .foregroundColor(.gray)
+                                                }
+                                }
+                                .padding()
+
+//                                if variantID.rawValue != shopify.cartItems.last?.rawValue {
+//                                    Divider().padding(.leading)
+//                                }
+                            }
+                        }
+
+                        Divider()
+
+                        HStack {
+                            Text("\(shopify.cartCount) item\(shopify.cartCount == 1 ? "" : "s")")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                            Spacer()
+                            Text("Free")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.green)
+                        }
+                        .padding()
+                    }
+                }
+                .checkoutCard()
                 // MARK: - Contact
                 SectionHeader(title: "Contact")
                 VStack(spacing: 0) {
@@ -186,6 +277,7 @@ struct CheckoutPageView: View {
 
     // MARK: - Validation
     var isFormValid: Bool {
+        !shopify.cartItems.isEmpty &&
         !email.isEmpty &&
         !firstName.isEmpty &&
         !lastName.isEmpty &&
@@ -200,7 +292,6 @@ struct CheckoutPageView: View {
     func completeOrder() {
         guard isFormValid else { return }
         
-        // Check weekly limit
         guard shopify.canCheckoutThisWeek else {
             errorMessage = "You can only place one order per week. Please wait until \(nextCheckoutDateString) to order again."
             return
@@ -214,7 +305,8 @@ struct CheckoutPageView: View {
         isSubmitting = true
         errorMessage = nil
         isSubmitting = false
-        shopify.recordCheckout() // records date and clears cart
+        shopify.recordCheckout()
+        NotificationManager.scheduleCheckoutConfirmation()  // ← add this line
         showCheckoutSheet = true
     }
 

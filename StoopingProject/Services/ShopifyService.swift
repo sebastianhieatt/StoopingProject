@@ -23,8 +23,71 @@ class ShopifyService: ObservableObject {
     var lastCursor: String? = nil
     var hasNextPage = true
     
+    struct CartItem: Codable, Equatable {
+        let productID: String
+        let variantID: String
+    }
+
+    
     init() {
         loadSavedState()
+    }
+    
+    func fetchProduct(by productID: GraphQL.ID, completion: @escaping (Storefront.Product?) -> Void) {
+        let query = Storefront.buildQuery { $0
+            .node(id: productID) { $0
+                .onProduct { $0
+                    .id()
+                    .title()
+                    .productType()
+                    .description()
+                    .images(first: 5) { $0
+                        .edges { $0
+                            .node { $0
+                                .url()
+                            }
+                        }
+                    }
+                    .variants(first: 1) { $0
+                        .edges { $0
+                            .node { $0
+                                .price { $0.amount().currencyCode() }
+                                .id()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        let task = client.queryGraphWith(query) { response, error in
+            if let error = error {
+                print("❌ fetchProduct error: \(error)")
+                DispatchQueue.main.async { completion(nil) }
+                return
+            }
+            
+            let product = response?.node as? Storefront.Product
+            DispatchQueue.main.async {
+                completion(product)
+            }
+        }
+        task.resume()
+    }
+    
+    func product(for variantID: GraphQL.ID) -> Storefront.Product? {
+        if let found = products.first(where: { product in
+            product.variants.edges.contains { $0.node.id == variantID }
+        }) {
+            return found
+        }
+        return collectionProducts.first { product in
+            product.variants.edges.contains { $0.node.id == variantID }
+        }
+    }
+    
+    func removeFromCart(variantID: GraphQL.ID) {
+        cartItems.removeAll { $0.variantID == variantID.rawValue }
     }
     
     private let client = Graph.Client(
@@ -33,11 +96,11 @@ class ShopifyService: ObservableObject {
     )
     // MARK: - Cart & Checkout Limits
     
-    @Published var cartItems: [GraphQL.ID] = [] {
+    @Published var cartItems: [CartItem] = [] {
         didSet {
-            // Save cart to UserDefaults whenever it changes
-            let stringIDs = cartItems.map { $0.rawValue }
-            UserDefaults.standard.set(stringIDs, forKey: "cartItems")
+            if let encoded = try? JSONEncoder().encode(cartItems) {
+                UserDefaults.standard.set(encoded, forKey: "cartItems")
+            }
         }
     }
 
@@ -59,16 +122,18 @@ class ShopifyService: ObservableObject {
 
     // Call this in init() to restore saved state
     func loadSavedState() {
-        if let savedIDs = UserDefaults.standard.array(forKey: "cartItems") as? [String] {
-            cartItems = savedIDs.map { GraphQL.ID(rawValue: $0) }
+        if let data = UserDefaults.standard.data(forKey: "cartItems"),
+           let decoded = try? JSONDecoder().decode([CartItem].self, from: data) {
+            cartItems = decoded
         }
         lastCheckoutDate = UserDefaults.standard.object(forKey: "lastCheckoutDate") as? Date
     }
 
-    func addToCart(variantID: GraphQL.ID) -> Bool {
+    func addToCart(productID: GraphQL.ID, variantID: GraphQL.ID) -> Bool {
         guard !cartIsFull else { return false }
-        guard !cartItems.contains(variantID) else { return false } // no duplicates
-        cartItems.append(variantID)
+        guard !cartItems.contains(where: { $0.variantID == variantID.rawValue }) else { return false }
+        
+        cartItems.append(CartItem(productID: productID.rawValue, variantID: variantID.rawValue))
         addToCartAndCheckout(variantID: variantID)
         return true
     }
