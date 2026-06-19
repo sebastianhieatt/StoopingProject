@@ -9,9 +9,11 @@ import SwiftUI
 
 @main
 struct StoopingProjectApp: App {
+    @StateObject var shopify = ShopifyService()
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(shopify)
                 .onAppear {
                     NotificationManager.requestPermission()
                 }
