@@ -101,7 +101,7 @@ struct StoreListView: View {
                     .onAppear {
                         if selectedCategory == "All" {
                             shopify.fetchNextPage()
-                        } else if let collection = shopify.collections.first(where: { $0.title == selectedCategory }) {
+                        } else if let collection = shopify.collections.last(where: { $0.title == selectedCategory }) {
                             shopify.fetchProductsForCollection(collection)
                             
                         }
