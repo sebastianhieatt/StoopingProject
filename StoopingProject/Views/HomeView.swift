@@ -132,13 +132,13 @@ struct NavIconButton: View {
             WorkInProgressView(title: "How it Works")
 
         case "About Us":
-            WorkInProgressView(title: "About Us")
+            AboutUsView()
 
         case "Shop Now":
             StoreListView()
 
         case "Checkout":
-            WorkInProgressView(title: "Checkout")
+            CheckoutPageView()
 
         default:
             WorkInProgressView(title: title)
