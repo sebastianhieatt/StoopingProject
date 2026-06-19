@@ -97,7 +97,7 @@ class ShopifyService: ObservableObject {
             isLoadingCollection = true
 
         let after: String? = collectionLastCursor
-
+        print("COLLECTION ID:  \(collection.id)")
         let query = Storefront.buildQuery { $0
             .collection(id: collection.id) { $0
                 .products(first: 50, after: after) { $0
