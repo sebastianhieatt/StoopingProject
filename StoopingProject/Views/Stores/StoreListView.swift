@@ -114,6 +114,7 @@ struct StoreListView: View {
         let product: Storefront.Product
 
         var body: some View {
+            
             NavigationLink(destination: ItemDescriptionView(product: product)) {
                 VStack(spacing: 8) {
                     if let imageURL = product.images.edges.first?.node.url {

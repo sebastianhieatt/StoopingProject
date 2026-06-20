@@ -11,7 +11,7 @@ import ShopifyCheckoutSheetKit
 
 struct CheckoutPageView: View {
     @EnvironmentObject var shopify: ShopifyService
-    
+    @FocusState private var focus
     
     // Contact
     @State private var email = ""
@@ -25,7 +25,6 @@ struct CheckoutPageView: View {
     @State private var state = ""
     @State private var zip = ""
     @State private var mobile = ""
-    
     @State private var isSubmitting = false
     @State private var showCheckoutSheet = false
     @State private var errorMessage: String? = nil
@@ -129,6 +128,7 @@ struct CheckoutPageView: View {
                     CheckoutTextField(placeholder: "Email", text: $email)
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
+                        .focused($focus, equals: true)
                 }
                 .checkoutCard()
 
@@ -200,8 +200,10 @@ struct CheckoutPageView: View {
                     // First & Last Name
                     HStack(spacing: 0) {
                         CheckoutTextField(placeholder: "First name", text: $firstName)
+                            .focused($focus, equals: true)
                         Divider()
                         CheckoutTextField(placeholder: "Last name", text: $lastName)
+                            .focused($focus, equals: true)
                     }
 
                     Divider().padding(.leading)
@@ -209,6 +211,7 @@ struct CheckoutPageView: View {
                     // Address
                     HStack {
                         CheckoutTextField(placeholder: "Address (campus or nearby address is acceptable)", text: $address)
+                            .focused($focus, equals: true)
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.gray)
                             .padding(.trailing)
@@ -219,10 +222,13 @@ struct CheckoutPageView: View {
                     // City, State, ZIP
                     HStack(spacing: 0) {
                         CheckoutTextField(placeholder: "City (Berkeley or nearby)", text: $city)
+                            .focused($focus, equals: true)
                         Divider()
                         CheckoutTextField(placeholder: "State", text: $state)
+                            .focused($focus, equals: true)
                         Divider()
                         CheckoutTextField(placeholder: "ZIP code (local)", text: $zip)
+                            .focused($focus, equals: true)
                             .keyboardType(.numberPad)
                     }
 
@@ -231,6 +237,7 @@ struct CheckoutPageView: View {
                     // Mobile
                     HStack {
                         CheckoutTextField(placeholder: "Mobile number (required for pickup coordination)", text: $mobile)
+                            .focused($focus, equals: true)
                             .keyboardType(.phonePad)
                         Image(systemName: "questionmark.circle")
                             .foregroundColor(.gray)
@@ -273,8 +280,11 @@ struct CheckoutPageView: View {
                 CheckoutSheet(checkout: url)
             }
         }
+        .onTapGesture{
+            focus = false
+        }
     }
-
+        
     // MARK: - Validation
     var isFormValid: Bool {
         !shopify.cartItems.isEmpty &&
@@ -306,7 +316,7 @@ struct CheckoutPageView: View {
         errorMessage = nil
         isSubmitting = false
         shopify.recordCheckout()
-        NotificationManager.scheduleCheckoutConfirmation()  // ← add this line
+        NotificationManager.scheduleCheckoutConfirmation()
         showCheckoutSheet = true
     }
 
@@ -331,11 +341,13 @@ struct SectionHeader: View {
 
 // MARK: - Checkout Text Field
 struct CheckoutTextField: View {
+    
     let placeholder: String
     @Binding var text: String
 
     var body: some View {
         TextField(placeholder, text: $text)
+            
             .padding()
     }
 }
