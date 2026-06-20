@@ -15,7 +15,7 @@ struct ContentView: View {
                     Text("Donate")
                 }
 
-            WorkInProgressView(title: "Checkout")
+            CheckoutPageView()
                 .tabItem {
                     Image(systemName: "cart.fill")
                     Text("Checkout")

@@ -100,7 +100,7 @@ struct CheckoutPageView: View {
                                                 }
                                 }
                                 .padding()
-
+//hi
 //                                if variantID.rawValue != shopify.cartItems.last?.rawValue {
 //                                    Divider().padding(.leading)
 //                                }
