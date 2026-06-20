@@ -19,7 +19,7 @@ struct AboutUsView: View {
 
                 // Title
                 Text("About Us")
-                    .font(.system(size: 60, weight: .regular, design: .serif))
+                    .font(AppTheme.pageTitle)
                     .padding(.top, 20)
 
                 // Description
@@ -70,7 +70,7 @@ struct InfoCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(30)
-        .background(Color(.systemGray5))
+        .background(AppTheme.cardBackground)
         .cornerRadius(20)
     }
 }

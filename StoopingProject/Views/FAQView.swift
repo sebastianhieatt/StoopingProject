@@ -10,7 +10,7 @@ struct FAQView: View {
             VStack(spacing: 16) {
 
                 Text("Frequently Asked Questions")
-                    .font(.largeTitle)
+                    .font(AppTheme.pageTitle)
                     .fontWeight(.bold)
                     .multilineTextAlignment(.center)
                     .padding(.top)
@@ -172,7 +172,7 @@ struct FAQItem: View {
             }
         }
         .padding()
-        .background(Color.gray.opacity(0.08))
+        .background(AppTheme.cardBackground)
         .cornerRadius(12)
     }
 }

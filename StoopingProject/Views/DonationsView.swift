@@ -58,7 +58,7 @@ Please submit the form below with photos and brief descriptions. We'll follow up
                         .fontWeight(.semibold)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(Color.green)
+                        .background(AppTheme.primaryGreen)
                         .foregroundColor(.white)
                         .cornerRadius(12)
                 }
