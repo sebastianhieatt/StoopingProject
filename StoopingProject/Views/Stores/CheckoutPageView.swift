@@ -317,6 +317,7 @@ struct CheckoutPageView: View {
         isSubmitting = false
         shopify.recordCheckout()
         NotificationManager.scheduleCheckoutConfirmation()
+        NotificationManager.schedulePickupNotificationsForOrder()
         showCheckoutSheet = true
     }
 
