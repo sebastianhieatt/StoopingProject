@@ -23,10 +23,48 @@ struct HomeView: View {
                             .cornerRadius(20)
                             .padding(.top)
 
-                        // IMPACT SECTION
-                        VStack(spacing: 12) {
+                        // MARK: - SHOP NOW BUTTON
 
-                            Text("Our Impact at a Glance")
+                        NavigationLink(destination: StoreListView()) {
+
+                            HStack(spacing: 12) {
+
+                                Image(systemName: "bag.fill")
+                                    .font(.title2)
+
+                                Text("Shop Now")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+
+                                Spacer()
+
+                                Image(systemName: "arrow.right.circle.fill")
+                                    .font(.title2)
+                            }
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                LinearGradient(
+                                    colors: [
+                                        Color.green,
+                                        Color.green.opacity(0.8)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .cornerRadius(18)
+                            .shadow(
+                                color: Color.green.opacity(0.3),
+                                radius: 8,
+                                x: 0,
+                                y: 4
+                            )
+                        }
+
+                        // IMPACT SECTION
+                        VStack(spacing: 12) {                            Text("Our Impact at a Glance")
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .padding(.top, 10)
