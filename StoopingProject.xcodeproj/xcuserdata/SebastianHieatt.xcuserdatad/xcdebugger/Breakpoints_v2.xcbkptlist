@@ -14,9 +14,9 @@
             filePath = "StoopingProject/Services/ShopifyService.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "242"
-            endingLineNumber = "242"
-            landmarkName = "fetchProductsForCollection(_:)"
+            startingLineNumber = "303"
+            endingLineNumber = "303"
+            landmarkName = "fetchCollections()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

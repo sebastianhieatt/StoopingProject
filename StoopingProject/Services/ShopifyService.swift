@@ -90,8 +90,43 @@ class ShopifyService: ObservableObject {
     
     func removeFromCart(variantID: GraphQL.ID) {
         cartItems.removeAll { $0.variantID == variantID.rawValue }
+        rebuildCheckoutURL()
     }
-    
+    func rebuildCheckoutURL() {
+        guard !cartItems.isEmpty else {
+            checkoutURL = nil
+            return
+        }
+        
+        let lineItems = cartItems.map {
+            Storefront.CartLineInput.create(merchandiseId: GraphQL.ID(rawValue: $0.variantID))
+        }
+        
+        let cartInput = Storefront.CartInput.create(lines: .value(lineItems))
+        
+        let mutation = Storefront.buildMutation { $0
+            .cartCreate(input: cartInput) { $0
+                .cart { $0
+                    .checkoutUrl()
+                    .id()
+                }
+            }
+        }
+        
+        let task = client.mutateGraphWith(mutation) { [weak self] response, error in
+            if let error = error {
+                print("❌ Rebuild cart error: \(error)")
+                return
+            }
+            if let url = response?.cartCreate?.cart?.checkoutUrl {
+                DispatchQueue.main.async {
+                    self?.checkoutURL = url
+                    print("✅ Cart rebuilt after removal")
+                }
+            }
+        }
+        task.resume()
+    }
     private let client = Graph.Client(
         shopDomain: "stooping-club-berkeley.myshopify.com",
         apiKey: "efde750d94d72e1a383e34ed9da89005"
