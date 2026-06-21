@@ -16,7 +16,11 @@ struct CheckoutPageView: View {
     @State private var isSubmitting = false
     @State private var showCheckoutSheet = false
     @State private var errorMessage: String? = nil
-    
+    var buttonLabel: String {
+        if isSubmitting { return "Placing Order..." }
+        if !shopify.canCheckoutThisWeek { return "Already ordered this week" }
+        return "Complete order"
+    }
     func resolvedProduct(for item: ShopifyService.CartItem) -> Storefront.Product? {
         if let cached = fetchedProducts[item.productID] {
             return cached
@@ -169,21 +173,18 @@ struct CheckoutPageView: View {
                 Button(action: completeOrder) {
                     HStack {
                         if isSubmitting {
-                            ProgressView()
-                                .tint(.white)
+                            ProgressView().tint(.white)
                         }
-                        Text(isSubmitting ? "Placing Order..." : "Complete order")
+                        Text(buttonLabel)
                             .fontWeight(.semibold)
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(isFormValid ? Color.green : Color.gray)
+                    .background((isFormValid && shopify.canCheckoutThisWeek) ? Color.green : Color.gray)
                     .foregroundColor(.white)
                     .cornerRadius(12)
                 }
-                .disabled(!isFormValid || isSubmitting)
-                
-                
+                .disabled(!isFormValid || isSubmitting || !shopify.canCheckoutThisWeek)
             }
             .padding()
         }
@@ -195,11 +196,12 @@ struct CheckoutPageView: View {
                     .onCancel {
                         print("🔴 onCancel FIRED")
                         showCheckoutSheet = false
-                        NotificationManager.scheduleCheckoutConfirmation()
                     }
                     .onComplete { event in
                         print("Order placed successfully!")
                         shopify.recordCheckout()
+                        shopify.lastCheckoutDate = Date()
+                        shopify.cartItems = []
                         fetchedProducts = [:]
                         NotificationManager.scheduleCheckoutConfirmation()
                         NotificationManager.schedulePickupNotificationsForOrder(sundayDate: Date())
@@ -222,6 +224,11 @@ struct CheckoutPageView: View {
     func completeOrder() {
         guard isFormValid else { return }
 
+        guard shopify.canCheckoutThisWeek else {
+                errorMessage = "You can only place one order per week. Please wait until \(nextCheckoutDateString) to order again."
+                return
+            }
+        
         guard shopify.checkoutURL != nil else {
             errorMessage = "No items in cart. Please add an item first."
             return

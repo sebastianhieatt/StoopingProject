@@ -19,16 +19,47 @@ class NotificationManager {
         }
     }
     
+    // TEMPORARY - for testing only
+    static func scheduleTestNotificationForToday(title: String, body: String, hour: Int, minute: Int) {
+        
+        guard notificationsEnabled else {
+            print("Notifications are disabled.")
+            return
+        }
+        
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        
+        let calendar = Calendar.current
+        var dateComponents = calendar.dateComponents([.year, .month, .day], from: Date())
+        dateComponents.hour = hour
+        dateComponents.minute = minute
+        
+        // If that time today has already passed, this fires immediately/next minute instead of waiting a week
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Error scheduling test notification: \(error.localizedDescription)")
+            } else {
+                print("Test notification scheduled for today at \(hour):\(String(format: "%02d", minute))")
+            }
+        }
+    }
+    
+    
+    
     static func schedulePickupNotificationsForOrder(
         sundayDate: Date
     ) {
         guard notificationsEnabled else { return }
         
         let calendar = Calendar.current
-        guard
-            let nextFriday = nextWeekday(6, from: Date(), using: calendar),
-            let nextSaturday = nextWeekday(7, from: Date(), using: calendar)
-        else { return }
+        guard let nextFriday = nextWeekday(6, from: Date(), using: calendar) else { return }
+        let nextSaturday = Calendar.current.date(byAdding: .day, value: 1, to: nextFriday) ?? nextFriday
         
         scheduleOneTimeNotification(title: "Reminder: Pickup is at 2pm today!", body: "1711 Eastshore Blv, El Cerrito, CA 94530", date: nextSaturday, hour: 9, minute: 0)
         scheduleOneTimeNotification(title: "Reminder: Confirm Your Stooping Club Pickup", body: "", date: nextFriday, hour: 9, minute: 0)

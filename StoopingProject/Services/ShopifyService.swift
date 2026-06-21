@@ -31,6 +31,8 @@ class ShopifyService: ObservableObject {
     
     init() {
         loadSavedState()
+        print("🛒 cartItems after load: \(cartItems.count)")
+        rebuildCheckoutURLIfNeeded()
     }
     
     func fetchProduct(by productID: GraphQL.ID, completion: @escaping (Storefront.Product?) -> Void) {
@@ -109,7 +111,46 @@ class ShopifyService: ObservableObject {
             UserDefaults.standard.set(lastCheckoutDate, forKey: "lastCheckoutDate")
         }
     }
-
+    
+    func rebuildCheckoutURLIfNeeded() {
+        print("🔄 rebuildCheckoutURLIfNeeded called — checkoutURL: \(checkoutURL?.absoluteString ?? "nil"), cartItems: \(cartItems.count)")
+        
+        guard checkoutURL == nil, !cartItems.isEmpty else {
+            print("⏭️ Skipping rebuild — guard failed")
+            return
+        }
+        
+        let lineItems = cartItems.map {
+            Storefront.CartLineInput.create(merchandiseId: GraphQL.ID(rawValue: $0.variantID))
+        }
+        
+        let cartInput = Storefront.CartInput.create(lines: .value(lineItems))
+        
+        let mutation = Storefront.buildMutation { $0
+            .cartCreate(input: cartInput) { $0
+                .cart { $0
+                    .checkoutUrl()
+                    .id()
+                }
+            }
+        }
+        
+        let task = client.mutateGraphWith(mutation) { [weak self] response, error in
+            if let error = error {
+                print("❌ Rebuild cart error: \(error)")
+                return
+            }
+            if let url = response?.cartCreate?.cart?.checkoutUrl {
+                DispatchQueue.main.async {
+                    self?.checkoutURL = url
+                    print("✅ Rebuilt checkout URL: \(url)")
+                }
+            } else {
+                print("⚠️ No checkoutUrl in response: \(String(describing: response))")
+            }
+        }
+        task.resume()
+    }
     var cartIsFull: Bool { cartItems.count >= 10 }
 
     var canCheckoutThisWeek: Bool {
@@ -128,7 +169,6 @@ class ShopifyService: ObservableObject {
         }
         lastCheckoutDate = UserDefaults.standard.object(forKey: "lastCheckoutDate") as? Date
     }
-
     func addToCart(productID: GraphQL.ID, variantID: GraphQL.ID) -> Bool {
         guard !cartIsFull else { return false }
         guard !cartItems.contains(where: { $0.variantID == variantID.rawValue }) else { return false }
