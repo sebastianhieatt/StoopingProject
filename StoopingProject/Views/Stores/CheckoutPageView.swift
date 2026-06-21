@@ -8,23 +8,11 @@
 import SwiftUI
 import Buy
 import ShopifyCheckoutSheetKit
+import Foundation
 
 struct CheckoutPageView: View {
     @EnvironmentObject var shopify: ShopifyService
-    @FocusState private var focus
-    
-    // Contact
-    @State private var email = ""
-    
-    // Address
     @State private var fetchedProducts: [String: Storefront.Product] = [:]
-    @State private var firstName = ""
-    @State private var lastName = ""
-    @State private var address = ""
-    @State private var city = ""
-    @State private var state = ""
-    @State private var zip = ""
-    @State private var mobile = ""
     @State private var isSubmitting = false
     @State private var showCheckoutSheet = false
     @State private var errorMessage: String? = nil
@@ -55,6 +43,7 @@ struct CheckoutPageView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+
                 // MARK: - Cart Summary
                 SectionHeader(title: "Order Summary")
 
@@ -73,14 +62,10 @@ struct CheckoutPageView: View {
                                             .clipped()
                                             .cornerRadius(8)
                                     } else {
-                                            // Shows briefly while fetching from API
-                                            HStack {
-                                                ProgressView()
-                                                Text("Loading item...")
-                                                    .foregroundColor(.secondary)
-                                            }
-                                            .padding()
-                                        }
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(Color.gray.opacity(0.2))
+                                            .frame(width: 50, height: 50)
+                                    }
 
                                     Text(product.title)
                                         .font(.subheadline)
@@ -91,18 +76,22 @@ struct CheckoutPageView: View {
                                     Text("Free")
                                         .font(.subheadline)
                                         .foregroundColor(.green)
+
                                     Button(action: {
-                                                    shopify.removeFromCart(variantID: GraphQL.ID(rawValue: item.variantID))
-                                                }) {
-                                                    Image(systemName: "xmark.circle.fill")
-                                                        .foregroundColor(.gray)
-                                                }
+                                        shopify.removeFromCart(variantID: GraphQL.ID(rawValue: item.variantID))
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.gray)
+                                    }
                                 }
                                 .padding()
-//hi
-//                                if variantID.rawValue != shopify.cartItems.last?.rawValue {
-//                                    Divider().padding(.leading)
-//                                }
+                            } else {
+                                HStack {
+                                    ProgressView()
+                                    Text("Loading item...")
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding()
                             }
                         }
 
@@ -120,15 +109,6 @@ struct CheckoutPageView: View {
                         }
                         .padding()
                     }
-                }
-                .checkoutCard()
-                // MARK: - Contact
-                SectionHeader(title: "Contact")
-                VStack(spacing: 0) {
-                    CheckoutTextField(placeholder: "Email", text: $email)
-                        .keyboardType(.emailAddress)
-                        .autocapitalization(.none)
-                        .focused($focus, equals: true)
                 }
                 .checkoutCard()
 
@@ -178,74 +158,6 @@ struct CheckoutPageView: View {
                     .background(Color.gray.opacity(0.1))
                     .cornerRadius(12)
 
-                // MARK: - Address
-                SectionHeader(title: "Address")
-                VStack(spacing: 0) {
-                    // Country (static)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Country/Region")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        HStack {
-                            Text("United States")
-                            Spacer()
-                            Image(systemName: "chevron.down")
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    .padding()
-                    
-                    Divider().padding(.leading)
-
-                    // First & Last Name
-                    HStack(spacing: 0) {
-                        CheckoutTextField(placeholder: "First name", text: $firstName)
-                            .focused($focus, equals: true)
-                        Divider()
-                        CheckoutTextField(placeholder: "Last name", text: $lastName)
-                            .focused($focus, equals: true)
-                    }
-
-                    Divider().padding(.leading)
-
-                    // Address
-                    HStack {
-                        CheckoutTextField(placeholder: "Address (campus or nearby address is acceptable)", text: $address)
-                            .focused($focus, equals: true)
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.gray)
-                            .padding(.trailing)
-                    }
-
-                    Divider().padding(.leading)
-
-                    // City, State, ZIP
-                    HStack(spacing: 0) {
-                        CheckoutTextField(placeholder: "City (Berkeley or nearby)", text: $city)
-                            .focused($focus, equals: true)
-                        Divider()
-                        CheckoutTextField(placeholder: "State", text: $state)
-                            .focused($focus, equals: true)
-                        Divider()
-                        CheckoutTextField(placeholder: "ZIP code (local)", text: $zip)
-                            .focused($focus, equals: true)
-                            .keyboardType(.numberPad)
-                    }
-
-                    Divider().padding(.leading)
-
-                    // Mobile
-                    HStack {
-                        CheckoutTextField(placeholder: "Mobile number (required for pickup coordination)", text: $mobile)
-                            .focused($focus, equals: true)
-                            .keyboardType(.phonePad)
-                        Image(systemName: "questionmark.circle")
-                            .foregroundColor(.gray)
-                            .padding(.trailing)
-                    }
-                }
-                .checkoutCard()
-
                 // MARK: - Error
                 if let error = errorMessage {
                     Text(error)
@@ -270,6 +182,8 @@ struct CheckoutPageView: View {
                     .cornerRadius(12)
                 }
                 .disabled(!isFormValid || isSubmitting)
+                
+                
             }
             .padding()
         }
@@ -278,47 +192,47 @@ struct CheckoutPageView: View {
         .sheet(isPresented: $showCheckoutSheet) {
             if let url = shopify.checkoutURL {
                 CheckoutSheet(checkout: url)
+                    .onCancel {
+                        print("🔴 onCancel FIRED")
+                        showCheckoutSheet = false
+                        NotificationManager.scheduleCheckoutConfirmation()
+                    }
+                    .onComplete { event in
+                        print("Order placed successfully!")
+                        shopify.recordCheckout()
+                        fetchedProducts = [:]
+                        NotificationManager.scheduleCheckoutConfirmation()
+                        NotificationManager.schedulePickupNotificationsForOrder(sundayDate: Date())
+                    }
+                    .onFail { error in
+                        print("⚠️ Checkout failed: \(error)")
+                    }
+                    .edgesIgnoringSafeArea(.all)
             }
         }
-        .onTapGesture{
-            focus = false
-        }
     }
+    
         
     // MARK: - Validation
     var isFormValid: Bool {
-        !shopify.cartItems.isEmpty &&
-        !email.isEmpty &&
-        !firstName.isEmpty &&
-        !lastName.isEmpty &&
-        !address.isEmpty &&
-        !city.isEmpty &&
-        !state.isEmpty &&
-        !zip.isEmpty &&
-        !mobile.isEmpty
+        !shopify.cartItems.isEmpty
     }
 
     // MARK: - Complete Order
     func completeOrder() {
         guard isFormValid else { return }
-        
-        guard shopify.canCheckoutThisWeek else {
-            errorMessage = "You can only place one order per week. Please wait until \(nextCheckoutDateString) to order again."
-            return
-        }
 
         guard shopify.checkoutURL != nil else {
             errorMessage = "No items in cart. Please add an item first."
             return
         }
+        
 
         isSubmitting = true
         errorMessage = nil
         isSubmitting = false
-        shopify.recordCheckout()
-        NotificationManager.scheduleCheckoutConfirmation()
-        NotificationManager.schedulePickupNotificationsForOrder()
         showCheckoutSheet = true
+        
     }
 
     var nextCheckoutDateString: String {
@@ -328,6 +242,7 @@ struct CheckoutPageView: View {
         formatter.dateStyle = .medium
         return formatter.string(from: next)
     }
+        
 }
 
 // MARK: - Section Header
@@ -337,19 +252,6 @@ struct SectionHeader: View {
         Text(title)
             .font(.title2)
             .fontWeight(.bold)
-    }
-}
-
-// MARK: - Checkout Text Field
-struct CheckoutTextField: View {
-    
-    let placeholder: String
-    @Binding var text: String
-
-    var body: some View {
-        TextField(placeholder, text: $text)
-            
-            .padding()
     }
 }
 
