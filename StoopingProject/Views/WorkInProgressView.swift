@@ -56,6 +56,8 @@ struct WorkInProgressView: View {
                             RuleRow(number: "1", text: "10 items per checkout")
                             RuleRow(number: "2", text: "1 checkout per week")
                             RuleRow(number: "3", text: "Everything is free")
+                            RuleRow(number: "4", text: "No reselling")
+                            RuleRow(number: "5", text: "Repeated no shows results in a 30 day ban")
                         }
                     }
                     .frame(maxWidth: .infinity)
